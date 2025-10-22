@@ -1,0 +1,12 @@
+{
+  "name": "Laravel devcontainer",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "laravel",
+  "shutdownAction": "none",
+  "workspaceFolder": "/var/www/html",
+  "features": {
+    "ghcr.io/devcontainers/features/nix:1": {
+      "extraNixConfig": "experimental-features = nix-command flakes"
+    }
+  }
+}
