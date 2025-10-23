@@ -24,6 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('news', NewsController::class)->except(['show']);
+    Route::get('/noticias/{id}', function ($id) {
+        return view('news.show', ['id' => (int) $id]);
+    })->name('news.show');
 });
 
 

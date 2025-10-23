@@ -10,3 +10,6 @@ Route::get('/user', function (Request $request) {
 
 
 Route::get('/news', [NewsController::class, 'index']);
+Route::get('/categories/{id}/news', [NewsController::class, 'byCategory']);
+Route::get('/news/{id}', [NewsController::class, 'show']);
+Route::get('/news/{id}/recommended', [NewsController::class, 'recommended']);

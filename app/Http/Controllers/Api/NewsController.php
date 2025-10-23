@@ -57,4 +57,37 @@ class NewsController extends Controller
             'Noticia creada correctamente.'
         );
     }
+
+    public function byCategory($id)
+    {
+        $news = News::whereHas('categories', function ($q) use ($id) {
+            $q->where('categories.id', $id);
+        })
+            ->published()
+            ->latest('published_at')
+            ->get(['id', 'title', 'image_url', 'excerpt', 'published_at']);
+
+        return response()->json($news);
+    }
+
+    public function show($id)
+    {
+        $item = News::with('categories:id,name,slug')
+            ->published()
+            ->findOrFail($id, ['id', 'title', 'image_url', 'body', 'published_at']);
+        return response()->json($item);
+    }
+
+    public function recommended($id)
+    {
+        $current = News::findOrFail($id);
+
+        $recommended = News::published()
+            ->where('id', '<>', $current->id)
+            ->latest('published_at')
+            ->take(3)
+            ->get(['id', 'title', 'image_url', 'excerpt', 'published_at']);
+
+        return response()->json($recommended);
+    }
 }
