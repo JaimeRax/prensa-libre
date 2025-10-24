@@ -11,13 +11,15 @@ Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
 
+Route::view('/', 'home')->name('home');
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'verified')->group(function () {
 
-    Route::view('/', 'home')->name('home');
     Route::view('/categorias', 'categories')->name('categories');
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    /* Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard'); */
+    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -28,8 +30,5 @@ Route::middleware('auth')->group(function () {
         return view('news.show', ['id' => (int) $id]);
     })->name('news.show');
 });
-
-
-
 
 require __DIR__.'/auth.php';

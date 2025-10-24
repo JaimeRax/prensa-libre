@@ -9,6 +9,11 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script>
+        window.IS_AUTH = @json(auth()->check());
+        window.LOGIN_URL = @json(route('login'));
+        window.NEWS_URL_PREFIX = @json(url('/noticias'));
+    </script>
 </head>
 <body class="bg-gray-50 text-gray-900">
     <!-- Topbar / Navbar -->
@@ -31,12 +36,12 @@
                         Inicio
                     </a>
 
-                    <a class="px-2 py-1 rounded-md text-sm font-medium {{ request()->is('categorias') ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900' }}"
-                        href="{{ url('/categorias') }}">
-                        Categorías
-                    </a>
-
                     @auth
+                        <a class="px-2 py-1 rounded-md text-sm font-medium {{ request()->is('categorias') ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900' }}"
+                            href="{{ url('/categorias') }}">
+                            Categorías
+                        </a>
+
                         <a class="text-sm font-medium hover:underline" href="{{ route('dashboard') }}">
                             Dashboard
                         </a>

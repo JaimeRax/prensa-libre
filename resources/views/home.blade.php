@@ -2,6 +2,10 @@
 @section('title', 'Inicio')
 
 @section('content')
+    <script>
+        window.isAuth = @json(auth()->check());
+    </script>
+
     <!-- Hero -->
     <section class="mb-10" id="hero">
         <div class="grid lg:grid-cols-12 gap-6">
@@ -55,44 +59,83 @@
     </section>
 
     <script>
-        // Utilidad: crea card HTML
-        function card(n, big = false) {
-            const img = n.image_url ? `<img src="${n.image_url}" alt="${n.title}" loading="lazy"
-                           class="${big ? 'h-64' : 'h-36'} w-full object-cover">` : '';
-            const text = `
-        <div class="${big ? 'p-6' : 'p-4'}">
-          <h3 class="${big ? 'text-xl' : 'text-base'} font-semibold leading-tight line-clamp-${big ? '2' : '2'}">${n.title}</h3>
-          ${n.excerpt ? `<p class="mt-2 text-sm text-gray-600 line-clamp-${big ? '3' : '2'}">${n.excerpt}</p>` : ''}
-          <div class="mt-3 text-xs text-gray-500">${new Date(n.published_at).toLocaleDateString()}</div>
-        </div>`;
+        document.addEventListener("DOMContentLoaded", () => {
+            const grid = document.getElementById("news-grid");
+            const heroCard = document.getElementById("hero-card");
+            const heroSide = document.getElementById("hero-side");
 
-            return `<article class="group bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 hover:shadow-md transition">
-        <div class="relative">
-          ${img}
-          <div class="absolute inset-0 ring-0 group-hover:ring-2 group-hover:ring-gray-900/10 transition"></div>
-        </div>
+            // Crear botón "Cargar más"
+            const loadMoreBtn = document.createElement("button");
+            loadMoreBtn.textContent = "Cargar más";
+            loadMoreBtn.className =
+                "mt-6 mx-auto block px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50";
+            grid.insertAdjacentElement("afterend", loadMoreBtn);
+
+            let page = 1;
+            const perPage = 3;
+            let lastPage = Infinity;
+            let loading = false;
+
+            function card(n, big = false) {
+                const href = window.IS_AUTH ? `${window.NEWS_URL_PREFIX}/${n.id}` : window.LOGIN_URL;
+
+                const img = n.image_url ?
+                    `<img src="${n.image_url}" alt="${n.title}" loading="lazy"
+           class="${big ? "h-64" : "h-36"} w-full object-cover rounded-t-2xl">` :
+                    "";
+                const text = `
+      <div class="${big ? "p-6" : "p-4"}">
+        <h3 class="${big ? "text-xl" : "text-base"} font-semibold leading-tight line-clamp-2">${n.title}</h3>
+        ${n.excerpt ? `<p class="mt-2 text-sm text-gray-600 line-clamp-2">${n.excerpt}</p>` : ""}
+        <div class="mt-3 text-xs text-gray-500">${new Date(n.published_at).toLocaleDateString()}</div>
+      </div>`;
+
+                return `
+      <a href="${href}" class="group bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 hover:shadow-md transition"
+         ${window.IS_AUTH ? '' : 'title="Inicia sesión para ver el detalle"'}>
+        ${img}
         ${text}
-      </article>`;
-        }
+      </a>`;
+            }
 
-        // Carga desde API y pinta hero + grid
-        fetch('/api/news')
-            .then(r => r.json())
-            .then(items => {
-                if (!Array.isArray(items) || items.length === 0) return;
+            async function loadNews() {
+                if (loading || page > lastPage) return;
+                loading = true;
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.textContent = "Cargando...";
 
-                // Hero: primera noticia grande + dos laterales
-                const [first, second, third, ...rest] = items;
+                try {
+                    const res = await fetch(`/api/news?page=${page}&per_page=${perPage}`);
+                    const {
+                        data,
+                        meta
+                    } = await res.json();
 
-                document.getElementById('hero-card').outerHTML = card(first, true);
+                    if (page === 1 && data.length) {
+                        const [first, second, third, ...rest] = data;
+                        heroCard.outerHTML = card(first, true);
+                        heroSide.innerHTML = [second, third].filter(Boolean).map(n => card(n)).join("");
+                        grid.innerHTML = rest.map(n => card(n)).join("");
+                    } else if (page > 1 && data.length) {
+                        grid.insertAdjacentHTML("beforeend", data.map(n => card(n)).join(""));
+                    }
 
-                const side = document.getElementById('hero-side');
-                side.innerHTML = [second, third].filter(Boolean).map(n => card(n, false)).join('');
+                    lastPage = meta.last_page;
+                    page++;
 
-                // Grid: resto
-                const grid = document.getElementById('news-grid');
-                grid.innerHTML = (rest.length ? rest : items).slice(0, 12).map(n => card(n)).join('');
-            })
-            .catch(console.error);
+                    if (page > lastPage) loadMoreBtn.style.display = "none";
+                } catch (err) {
+                    console.error("Error cargando noticias:", err);
+                } finally {
+                    loading = false;
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.textContent = "Cargar más";
+                }
+            }
+
+            loadNews();
+            loadMoreBtn.addEventListener("click", loadNews);
+        });
     </script>
+
 @endsection

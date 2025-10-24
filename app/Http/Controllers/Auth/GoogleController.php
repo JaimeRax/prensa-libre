@@ -37,6 +37,12 @@ class GoogleController extends Controller
             $user->save();
         }
 
+        if (is_null($user->email_verified_at)) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+        }
+
+        $user->assignRole('administrador');
+
         Auth::login($user, remember:true);
         return redirect()->intended('/');
     }

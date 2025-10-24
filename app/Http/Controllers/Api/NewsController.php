@@ -12,13 +12,26 @@ class NewsController extends Controller
     //
     public function index()
     {
+        $perPage = (int) request('per_page', 3);
+
         $news = News::with('categories:id,name,slug')
             ->published()
             ->latest('published_at')
-            ->take(12)
-            ->get(['id','title','image_url','excerpt','published_at']);
+            ->paginate($perPage, ['id','title','image_url','excerpt','published_at']);
 
-        return response()->json($news);
+        return response()->json([
+            'data' => $news->items(),
+            'meta' => [
+                'current_page' => $news->currentPage(),
+                'last_page' => $news->lastPage(),
+                'per_page' => $news->perPage(),
+                'total' => $news->total(),
+            ],
+            'links' => [
+                'next' => $news->nextPageUrl(),
+                'prev' => $news->previousPageUrl(),
+            ],
+        ]);
     }
 
 
@@ -60,14 +73,28 @@ class NewsController extends Controller
 
     public function byCategory($id)
     {
+        $perPage = (int) request('per_page', 3);
+
         $news = News::whereHas('categories', function ($q) use ($id) {
             $q->where('categories.id', $id);
         })
             ->published()
             ->latest('published_at')
-            ->get(['id', 'title', 'image_url', 'excerpt', 'published_at']);
+            ->paginate($perPage, ['id', 'title', 'image_url', 'excerpt', 'published_at']);
 
-        return response()->json($news);
+        return response()->json([
+            'data' => $news->items(),
+            'meta' => [
+                'current_page' => $news->currentPage(),
+                'last_page' => $news->lastPage(),
+                'per_page' => $news->perPage(),
+                'total' => $news->total(),
+            ],
+            'links' => [
+                'next' => $news->nextPageUrl(),
+                'prev' => $news->previousPageUrl(),
+            ],
+        ]);
     }
 
     public function show($id)

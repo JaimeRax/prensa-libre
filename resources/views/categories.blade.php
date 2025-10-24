@@ -46,58 +46,116 @@
             const buttons = document.querySelectorAll('.category-btn');
             const container = document.getElementById('news-container');
 
-            buttons.forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const id = btn.dataset.id;
+            let currentCategory = null;
+            let page = 1,
+                lastPage = Infinity,
+                loading = false;
+            const perPage = 3;
 
-                    // Estilo de seleccion
+            function renderSkeleton() {
+                return `<div class="text-center py-8 text-gray-500 animate-pulse">Cargando noticias…</div>`;
+            }
+
+            function renderFrame(name) {
+                return `
+      <h2 class="text-lg font-semibold mb-4">Noticias de ${name}</h2>
+      <div id="grid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      <div class="mt-6 text-center">
+        <button id="load-more" class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
+          Cargar más
+        </button>
+      </div>
+    `;
+            }
+
+            function card(n) {
+                const href = window.IS_AUTH ? `${window.NEWS_URL_PREFIX}/${n.id}` : window.LOGIN_URL;
+                return `
+      <a href="${href}"
+         class="group bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 hover:shadow-md transition"
+         ${window.IS_AUTH ? '' : 'title="Inicia sesión para ver el detalle"'}>
+        <img src="${n.image_url ?? 'https://via.placeholder.com/300x200'}"
+             alt="${n.title}" class="h-36 w-full object-cover">
+        <div class="p-4">
+          <h3 class="text-base font-semibold leading-tight line-clamp-2 group-hover:underline">${n.title}</h3>
+          ${n.excerpt ? `<p class="mt-1 text-sm text-gray-600 line-clamp-2">${n.excerpt}</p>` : ''}
+          <div class="mt-3 text-xs text-gray-500">${new Date(n.published_at).toLocaleDateString()}</div>
+        </div>
+      </a>
+    `;
+            }
+
+            async function loadPage(catId) {
+                if (loading || page > lastPage) return;
+                loading = true;
+
+                const btn = document.getElementById('load-more');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Cargando…';
+                }
+
+                try {
+                    const res = await fetch(`/api/categories/${catId}/news?page=${page}&per_page=${perPage}`);
+                    const {
+                        data,
+                        meta
+                    } = await res.json();
+
+                    const grid = document.getElementById('grid');
+
+                    if (page === 1 && data.length === 0) {
+                        grid.innerHTML =
+                            `<div class="col-span-full text-center text-gray-400 py-8">No hay noticias en esta categoría.</div>`;
+                        if (btn) btn.style.display = 'none';
+                        lastPage = 0;
+                        return;
+                    }
+
+                    grid.insertAdjacentHTML('beforeend', data.map(card).join(''));
+
+                    lastPage = meta.last_page;
+                    page++;
+
+                    if (btn) {
+                        if (page > lastPage) btn.style.display = 'none';
+                        btn.disabled = false;
+                        btn.textContent = 'Cargar más';
+                    }
+                } catch (e) {
+                    console.error(e);
+                    if (btn) btn.textContent = 'Reintentar';
+                } finally {
+                    loading = false;
+                }
+            }
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = Number(btn.dataset.id);
+                    const name = btn.textContent.trim();
+
+                    // Estilo seleccionado
                     buttons.forEach(b => b.classList.remove('ring-2', 'ring-gray-900/10'));
                     btn.classList.add('ring-2', 'ring-gray-900/10');
 
-                    container.innerHTML = `
-                <div class="text-center py-8 text-gray-500 animate-pulse">
-                    Cargando noticias…
-                </div>
-            `;
+                    // Reset de paginación
+                    currentCategory = id;
+                    page = 1;
+                    lastPage = Infinity;
 
-                    try {
-                        const res = await fetch(`/api/categories/${id}/news`);
-                        const news = await res.json();
+                    // Render base + botón al final
+                    container.innerHTML = renderFrame(name);
 
-                        if (!news.length) {
-                            container.innerHTML = `
-                        <div class="text-center py-8 text-gray-400">
-                            No hay noticias disponibles para esta categoría.
-                        </div>
-                    `;
-                            return;
-                        }
+                    // Cargar primera página
+                    loadPage(id);
 
-                        container.innerHTML = `
-                    <h2 class="text-lg font-semibold mb-4">Noticias de ${btn.textContent.trim()}</h2>
-                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        ${news.map(n => `
-                                    <a href="/noticias/${n.id}"
-                                       class="group bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 hover:shadow-md transition">
-                                        <img src="${n.image_url ?? 'https://via.placeholder.com/300x200'}"
-                                             alt="${n.title}"
-                                             class="h-36 w-full object-cover">
-                                        <div class="p-4">
-                                            <h3 class="text-base font-semibold leading-tight line-clamp-2 group-hover:underline">${n.title}</h3>
-                                            <p class="mt-1 text-sm text-gray-600 line-clamp-2">${n.excerpt ?? ''}</p>
-                                            <div class="mt-3 text-xs text-gray-500">${new Date(n.published_at).toLocaleDateString()}</div>
-                                        </div>
-                                    </a>
-                                `).join('')}
-                    </div>
-                `;
-                    } catch (e) {
-                        console.error(e);
-                        container.innerHTML =
-                            `<p class="text-center text-red-500 py-8">Error al cargar las noticias.</p>`;
-                    }
+                    // Wire del botón inferior
+                    const more = document.getElementById('load-more');
+                    more.onclick = () => loadPage(id);
                 });
             });
         });
     </script>
+
 @endsection
