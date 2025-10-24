@@ -46,6 +46,7 @@ class NewsController extends Controller
     {
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
+            'autor'     => 'nullable|string|max:255',
             'excerpt'     => 'nullable|string|max:500',
             'body'     => 'required|string',
             'image_url'   => 'nullable|url',

@@ -10,7 +10,7 @@ class News extends Model
     //
     use HasFactory;
 
-    protected $fillable = ['title','image_url','excerpt','body','published_at','user_id'];
+    protected $fillable = ['title','autor','image_url','excerpt','body','published_at','user_id'];
     protected $casts = ['published_at' => 'datetime'];
 
     public function categories()

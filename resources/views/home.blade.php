@@ -105,7 +105,7 @@
                 loadMoreBtn.textContent = "Cargando...";
 
                 try {
-                    const res = await fetch(`/api/news?page=${page}&per_page=${perPage}`);
+                    const res = await apiFetch(`/api/news?page=${page}&per_page=${perPage}`);
                     const {
                         data,
                         meta

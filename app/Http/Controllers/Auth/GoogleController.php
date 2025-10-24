@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class GoogleController extends Controller
 {
@@ -44,6 +45,10 @@ class GoogleController extends Controller
         $user->assignRole('administrador');
 
         Auth::login($user, remember:true);
+
+        $token = JWTAuth::fromUser($user);
+        session(['jwt_token' => $token]);
+
         return redirect()->intended('/');
     }
 }

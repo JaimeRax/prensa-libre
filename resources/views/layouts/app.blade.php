@@ -16,6 +16,12 @@
     </script>
 </head>
 <body class="bg-gray-50 text-gray-900">
+    @if (session('jwt_token'))
+        <script>
+            window.JWT = @json(session('jwt_token'));
+        </script>
+    @endif
+
     <!-- Topbar / Navbar -->
     <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
         <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -134,5 +140,49 @@
             © {{ date('Y') }} PrensaLibre demo
         </div>
     </footer>
+
+    <script>
+        async function apiFetch(url, options = {}) {
+            const headers = options.headers || {};
+
+            // Si existe el token, lo agrega al encabezado
+            if (window.JWT) {
+                headers['Authorization'] = `Bearer ${window.JWT}`;
+            }
+
+            // Define las opciones finales
+            const opts = {
+                ...options,
+                headers
+            };
+
+            let response = await fetch(url, opts);
+
+            // Si el token expiró (401), intenta renovarlo automáticamente
+            if (response.status === 401 && window.JWT) {
+                try {
+                    const refresh = await fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${window.JWT}`
+                        },
+                    });
+
+                    if (refresh.ok) {
+                        const data = await refresh.json();
+                        window.JWT = data.access_token; // actualiza el token
+                        headers['Authorization'] = `Bearer ${window.JWT}`;
+                        response = await fetch(url, opts); // reintenta la llamada
+                    } else {
+                        console.warn('No se pudo refrescar el token JWT.');
+                    }
+                } catch (err) {
+                    console.error('Error al refrescar el token JWT:', err);
+                }
+            }
+
+            return response;
+        }
+    </script>
 </body>
 </html>

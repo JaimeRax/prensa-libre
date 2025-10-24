@@ -71,18 +71,21 @@
             function card(n) {
                 const href = window.IS_AUTH ? `${window.NEWS_URL_PREFIX}/${n.id}` : window.LOGIN_URL;
                 return `
-      <a href="${href}"
-         class="group bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 hover:shadow-md transition"
-         ${window.IS_AUTH ? '' : 'title="Inicia sesión para ver el detalle"'}>
-        <img src="${n.image_url ?? 'https://via.placeholder.com/300x200'}"
-             alt="${n.title}" class="h-36 w-full object-cover">
-        <div class="p-4">
-          <h3 class="text-base font-semibold leading-tight line-clamp-2 group-hover:underline">${n.title}</h3>
-          ${n.excerpt ? `<p class="mt-1 text-sm text-gray-600 line-clamp-2">${n.excerpt}</p>` : ''}
-          <div class="mt-3 text-xs text-gray-500">${new Date(n.published_at).toLocaleDateString()}</div>
+    <a href="${href}"
+       class="group bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100 hover:shadow-md transition"
+       ${window.IS_AUTH ? '' : 'title="Inicia sesión para ver el detalle"'}>
+      <img src="${n.image_url ?? 'https://via.placeholder.com/300x200'}"
+           alt="${n.title}" class="h-36 w-full object-cover">
+      <div class="p-4">
+        <h3 class="text-base font-semibold leading-tight line-clamp-2 group-hover:underline">${n.title}</h3>
+        ${n.excerpt ? `<p class="mt-1 text-sm text-gray-600 line-clamp-2">${n.excerpt}</p>` : ''}
+        <div class="mt-3 text-xs text-gray-500 flex items-center justify-between">
+          <span>${new Date(n.published_at).toLocaleDateString()}</span>
+          ${n.autor ? `<span class="italic text-gray-700">Por ${n.autor}</span>` : ''}
         </div>
-      </a>
-    `;
+      </div>
+    </a>
+  `;
             }
 
             async function loadPage(catId) {
@@ -96,7 +99,8 @@
                 }
 
                 try {
-                    const res = await fetch(`/api/categories/${catId}/news?page=${page}&per_page=${perPage}`);
+                    const res = await apiFetch(
+                        `/api/categories/${catId}/news?page=${page}&per_page=${perPage}`);
                     const {
                         data,
                         meta

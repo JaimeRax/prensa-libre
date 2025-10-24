@@ -29,6 +29,12 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700">Autor</label>
+                <input class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900/10"
+                    name="autor" required type="text" value="{{ old('autor') }}">
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700">Título</label>
                 <input class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900/10"
                     name="title" required type="text" value="{{ old('title') }}">
